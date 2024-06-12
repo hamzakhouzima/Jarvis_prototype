@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Function to create an entity
+# function to create an entity
 create_entity() {
     PACKAGE_NAME=$1
     ENTITY_NAME=$2
     ENTITY_FILE=src/main/java/${PACKAGE_NAME//.//}/entity/${ENTITY_NAME}.java
 
-    # Check if the entity folder exists, if not create it
+    # check if the entity folder exists, if not create it
     if [ ! -d "src/main/java/${PACKAGE_NAME//.//}/entity" ]; then
         mkdir -p src/main/java/${PACKAGE_NAME//.//}/entity
     fi
@@ -33,14 +33,14 @@ EOL
     echo "Entity ${ENTITY_NAME} created successfully."
 }
 
-# Function to create a repository
+# function to create a repository
 create_repository() {
     PACKAGE_NAME=$1
     ENTITY_NAME=$2
     REPOSITORY_NAME=${ENTITY_NAME}Repository
     REPOSITORY_FILE=src/main/java/${PACKAGE_NAME//.//}/repository/${REPOSITORY_NAME}.java
 
-    # Check if the repository folder exists, if not create it
+    # check if the repository folder exists, if not create it
     if [ ! -d "src/main/java/${PACKAGE_NAME//.//}/repository" ]; then
         mkdir -p src/main/java/${PACKAGE_NAME//.//}/repository
     fi
@@ -60,7 +60,7 @@ EOL
     echo "Repository ${REPOSITORY_NAME} created successfully."
 }
 
-# Function to create a service
+# function to create a service
 create_service() {
     PACKAGE_NAME=$1
     SERVICE_NAME=$2

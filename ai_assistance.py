@@ -29,4 +29,3 @@ if __name__ == "__main__":
     result = generate_code(prompt)
     print(result)
 
-# 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
