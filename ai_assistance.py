@@ -1,21 +1,23 @@
 import sys
 import os
-from openai import OpenAI
-
+import openai  
 def generate_code(prompt):
-    client = OpenAI(
-        # api_key=os.environ.get("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")
-       api_key = "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"
-    )
-    
-    response = client.chat.completions.create(
+    openai.api_key = "sk-filahati-vKfpTeKHVqcp7AuTmgKvT3BlbkFJuRyitFCyN1glGEmj2U1N"
+    full_prompt = f"""
+    You are a coding assistant. Your task is to generate code based on the following prompt. Please provide only the necessary code and include explanatory comments for each step. Do not include any other text in your response.
+
+    Prompt: {prompt}
+
+    Only return the code and comments.
+    """
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
         messages=[
             {
                 "role": "user",
-                "content": prompt,
+                "content":"" + full_prompt,
             }
         ],
-        model="gpt-3.5-turbo",
     )
     
     return response.choices[0].message['content'].strip()
@@ -28,4 +30,3 @@ if __name__ == "__main__":
     prompt = sys.argv[1]
     result = generate_code(prompt)
     print(result)
-

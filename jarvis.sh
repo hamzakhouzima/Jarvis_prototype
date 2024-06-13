@@ -147,40 +147,6 @@ EOL
     echo "Controller ${CONTROLLER_NAME}Controller created successfully."
 }
 
-# Main script logic
-if [ "$#" -ne 4 ]; then
-    echo "Usage: $0 create {controller|service|entity|repository} <Package.Name> <Name>"
-    exit 1
-fi
-
-COMMAND=$1
-TYPE=$2
-PACKAGE_NAME=$3
-NAME=$4
-
-case $TYPE in
-    controller)
-        create_controller $PACKAGE_NAME $NAME
-        ;;
-    service)
-        create_service $PACKAGE_NAME $NAME
-        ;;
-    entity)
-        create_entity $PACKAGE_NAME $NAME
-        ;;
-    repository)
-        create_repository $PACKAGE_NAME $NAME
-        ;;
-    *)
-        echo "Invalid type. Valid types are: controller, service, entity, repository."
-        exit 1
-        ;;
-esac
-
-############################################################################################
-
-
-
 # Function to call the Python AI assistant script
 call_openai() {
     local prompt=$1
@@ -221,27 +187,170 @@ EOL
     fi
 }
 
-# Main script logic
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 prompt openai <your_prompt>"
-    exit 1
-fi
+# Function to perform HTTP GET request
+http_get() {
+    echo "Enter the URL for GET request:"
+    read url
+    curl -X GET "$url" -H "Accept: application/json"
+}
 
-ACTION=$1
-TYPE=$2
-PROMPT=$3
+# Function to perform HTTP POST request
+http_post() {
+    echo "Enter the URL for POST request:"
+    read url
+    echo "Enter the JSON data for the POST request:"
+    read data
+    curl -X POST "$url" -H "Content-Type: application/json" -d "$data"
+}
 
-case $TYPE in
-    openai)
-        if [ "$ACTION" == "prompt" ]; then
-            create_or_update_repository "com.example" "$PROMPT"
-        else
-            echo "Invalid action. Valid action is: prompt"
-            exit 1
+# Function to perform HTTP PUT request
+http_put() {
+    echo "Enter the URL for PUT request:"
+    read url
+    echo "Enter the JSON data for the PUT request:"
+    read data
+    curl -X PUT "$url" -H "Content-Type: application/json" -d "$data"
+}
+
+# Function to perform HTTP DELETE request
+http_delete() {
+    echo "Enter the URL for DELETE request:"
+    read url
+    curl -X DELETE "$url" -H "Accept: application/json"
+}
+
+# Function to handle HTTP requests
+http_request() {
+    echo "Choose the HTTP method (GET, POST, PUT, DELETE):"
+    read method
+    case $method in
+        GET)
+            http_get
+            ;;
+        POST)
+            http_post
+            ;;
+        PUT)
+            http_put
+            ;;
+        DELETE)
+            http_delete
+            ;;
+        *)
+            echo "Invalid HTTP method selected."
+            ;;
+    esac
+}
+
+
+########################################################################################################################
+# Detect project language and framework
+detect_project_info() {
+    PROJECT_DIR=$1
+    CONFIG_FILE=$2
+
+    # Initialize variables
+    LANGUAGE=""
+    FRAMEWORK=""
+    PACKAGE_NAME=""
+
+    # Detect the language and framework based on file extensions and contents
+    if [ "$(find $PROJECT_DIR -name '*.java' | wc -l)" -gt 0 ]; then
+        LANGUAGE="Java"
+        if grep -q "spring-boot" $(find $PROJECT_DIR -name 'pom.xml' -o -name 'build.gradle'); then
+            FRAMEWORK="Spring Boot"
+        elif grep -q "quarkus" $(find $PROJECT_DIR -name 'pom.xml' -o -name 'build.gradle'); then
+            FRAMEWORK="Quarkus"
         fi
-        ;;
-    *)
-        echo "Invalid type. Valid type is: openai"
-        exit 1
-        ;;
-esac
+        PACKAGE_NAME=$(grep -oP 'package \K[\w\.]+' $(find $PROJECT_DIR -name '*.java' | head -n 1))
+    elif [ "$(find $PROJECT_DIR -name '*.py' | wc -l)" -gt 0 ]; then
+        LANGUAGE="Python"
+        if grep -q "flask" $(find $PROJECT_DIR -name 'requirements.txt'); then
+            FRAMEWORK="Flask"
+        elif grep -q "django" $(find $PROJECT_DIR -name 'requirements.txt'); then
+            FRAMEWORK="Django"
+        fi
+    fi
+
+    # Generate the configuration file
+    cat <<EOL > $CONFIG_FILE
+{
+  "project_name": "$(basename $PROJECT_DIR)",
+  "language": "$LANGUAGE",
+  "framework": "$FRAMEWORK",
+  "package_name": "$PACKAGE_NAME",
+  "entity_path": "$PROJECT_DIR/src/main/java/${PACKAGE_NAME//.//}/entity",
+  "repository_path": "$PROJECT_DIR/src/main/java/${PACKAGE_NAME//.//}/repository",
+  "service_path": "$PROJECT_DIR/src/main/java/${PACKAGE_NAME//.//}/service",
+  "controller_path": "$PROJECT_DIR/src/main/java/${PACKAGE_NAME//.//}/controller"
+}
+EOL
+
+    echo "Configuration file $CONFIG_FILE created successfully."
+}
+
+PROJECT_DIR="path_to_your_project"
+CONFIG_FILE="project_config.json"
+detect_project_info $PROJECT_DIR $CONFIG_FILE
+
+########################################################################################################################
+# Main menu
+while true; do
+    echo "Choose an option:"
+    echo "1. Generate Code with AI"
+    echo "2. Create Controller"
+    echo "3. Create Service"
+    echo "4. Create Entity"
+    echo "5. Create Repository"
+    echo "6. HTTP Request"
+    echo "7. Exit"
+    read choice
+    case $choice in
+        1)
+            echo "Enter your prompt for code generation:"
+            read prompt
+            call_openai "$prompt"
+            ;;
+        2)
+            echo "Enter package name for controller:"
+            read package_name
+            echo "Enter controller name:"
+            read controller_name
+            create_controller $package_name $controller_name
+            ;;
+        3)
+            echo "Enter package name for service:"
+            read package_name
+            echo "Enter service name:"
+            read service_name
+            create_service $package_name $service_name
+            ;;
+        4)
+            echo "Enter package name for entity:"
+            read package_name
+            echo "Enter entity name:"
+            read entity_name
+            create_entity $package_name $entity_name
+            ;;
+        5)
+            echo "Enter package name for repository:"
+            read package_name
+            echo "Enter entity name:"
+            read entity_name
+            create_repository $package_name $entity_name
+            ;;
+        6)
+            http_request
+            ;;
+        7)
+            echo "Exiting Jarvis. Goodbye!"
+            exit 0
+            ;;
+        *)
+            echo "Invalid choice. Please try again."
+            ;;
+    esac
+done
+
+
+
